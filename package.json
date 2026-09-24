@@ -1,0 +1,10 @@
+{
+  "name": "dpo-contratos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dashboard de Contratos UnB — Tesouro Gerencial + Comprasnet API",
+  "scripts": {
+    "build": "cd dashboard && npm install && npm run build",
+    "start": "cd dashboard && npm run preview"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "lastUpdated": "24/09/2026 às 16:32",
+  "source": "Tesouro Gerencial (Excel) + Comprasnet (API)",
+  "ug": "154040",
+  "totalRegistros": 1176,
+  "totalComContrato": 403,
+  "totalVencidos": 52,
+  "totalVence30": 8,
+  "totalVence90": 9,
+  "totalVence180": 247,
+  "totalVigente": 85,
+  "totalEmpenhado": 164587595.79,
+  "totalLiquidado": 141251851.97,
+  "totalPago": 140397689.14,
+  "totalALiquidar": 23335743.82,
+  "matchMinuta": 414,
+  "matchCnpjLic": 0,
+  "matchCnpjUnico": 0
+}
