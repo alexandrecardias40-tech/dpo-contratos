@@ -24,14 +24,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setLoading(true);
-    fetch("./data.json")
+    fetch("data.json")
       .then(res => {
-        if (!res.ok) throw new Error("Erro ao carregar data.json");
-        return res.json();
+        if (!res.ok) return fetch("./data.json");
+        return res;
       })
+      .then(res => res.json())
       .then(json => {
-        setData(json);
-        fetch("./metadata.json")
+        setData(Array.isArray(json) ? json : []);
+        fetch("metadata.json")
           .then(res => res.json())
           .then(metaJson => {
             setMeta(metaJson);

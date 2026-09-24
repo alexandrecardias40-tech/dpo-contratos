@@ -10,12 +10,12 @@ export default function Router() {
   return (
     <WouterRouter hook={useHashLocation}>
       <Switch>
-        <Route path="/" component={LandingPage} />
+        <Route path="/" component={App} />
         <Route path="/dashboard" component={App} />
         <Route path="/graficos" component={GraficosPage} />
         <Route path="/comparisons" component={ComparativosPage} />
         <Route path="/simulador" component={SimulatorPage} />
-        <Route component={LandingPage} />
+        <Route component={App} />
       </Switch>
     </WouterRouter>
   );
