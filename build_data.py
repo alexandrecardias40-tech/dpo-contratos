@@ -202,9 +202,9 @@ for _, row in df.iterrows():
     item_info   = str(row.get("item_info","")).strip()
 
     emp   = parse_br(row.get("empenhado", 0))
-    liq   = parse_br(row.get("liquidado", 0))
+    liq   = parse_br(row.get("liquidado", 0)) + parse_br(row.get("rap_liq", 0))
     pago  = parse_br(row.get("pago", 0))
-    a_liq = parse_br(row.get("a_liquidar", 0))
+    a_liq = parse_br(row.get("a_liquidar", 0)) + parse_br(row.get("rap_a_liq", 0))
 
     # Linhas sem valor financeiro e sem chave (ex: "NAO SE APLICA")
     if emp == 0 and liq == 0 and pago == 0 and a_liq == 0:

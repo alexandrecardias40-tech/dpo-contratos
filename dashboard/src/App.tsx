@@ -23,7 +23,7 @@ const ALERTA_COR: Record<string,{bg:string;color:string;border:string}> = {
 };
 
 // ── KPI Card ────────────────────────────────────────────────────
-function KPI({icon,title,value,sub,color}:{icon:string;title:string;value:string;sub:string;color:string}) {
+function KPI({icon,title,value,sub,color}:{icon:string;title:React.ReactNode;value:string;sub:string;color:string}) {
   return (
     <div style={{
       background:"white",border:"1px solid #e2e8f0",borderRadius:12,padding:"12px 14px",
@@ -237,6 +237,7 @@ export default function App() {
   const [filtSit,         setFiltSit]         = useState<string[]>([]);
   const [filtAlerta,      setFiltAlerta]      = useState<string[]>([]);
   const [filtMod,         setFiltMod]         = useState<string[]>([]);
+  const [filtVigenciaGrupo, setFiltVigenciaGrupo] = useState<"Todos"|"Válidos"|"Vencidos">("Todos");
   const [sortBy,          setSortBy]          = useState<"nome"|"emp"|"liq"|"pago"|"vig">("nome");
   const [page,            setPage]            = useState(1);
   const [selectedRecord,  setSelectedRecord]  = useState<any|null>(null);
@@ -279,7 +280,14 @@ export default function App() {
     if (filtChave)          arr = arr.filter((r: any) => r.chave_usada === filtChave);
     if (filtSit.length)     arr = arr.filter((r: any) => filtSit.includes(r.status));
     if (filtAlerta.length)  arr = arr.filter((r: any) => filtAlerta.includes(r.alerta_vigencia));
-    if (filtAlertaSingle)  arr = arr.filter((r: any) => r.alerta_vigencia === filtAlertaSingle);
+    if (filtAlertaSingle)   arr = arr.filter((r: any) => r.alerta_vigencia === filtAlertaSingle);
+    
+    if (filtVigenciaGrupo === "Válidos") {
+      arr = arr.filter((r: any) => r.alerta_vigencia && r.alerta_vigencia !== "Vencido");
+    } else if (filtVigenciaGrupo === "Vencidos") {
+      arr = arr.filter((r: any) => r.alerta_vigencia === "Vencido");
+    }
+    
     if (filtMod.length)     arr = arr.filter((r: any) => filtMod.includes(r.contrato_modalidade));
     
     if (filtMes) {
@@ -299,7 +307,7 @@ export default function App() {
       return (a.favorecido_nome || "").localeCompare(b.favorecido_nome || "", "pt-BR");
     });
     return arr;
-  }, [records, search, filtChave, filtSit, filtAlerta, filtAlertaSingle, filtMod, sortBy, filtMes]);
+  }, [records, search, filtChave, filtSit, filtAlerta, filtAlertaSingle, filtVigenciaGrupo, filtMod, sortBy, filtMes]);
 
   const T = useMemo(() => ({
     emp:   filtered.reduce((s: number, r: any) => s + (Number(r.emp)||0), 0),
@@ -344,11 +352,10 @@ export default function App() {
         </div>
 
         {/* ── KPIs ── */}
-        <div className="kpi-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+        <div className="kpi-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
           <KPI icon="📋" title="Empenhado"  value={fmt(T.emp)}  sub="Tesouro Gerencial"               color="#3b82f6"/>
-          <KPI icon="💧" title="Liquidado"  value={fmt(T.liq)}  sub={pct(T.liq,T.emp)+" do empenhado"} color="#8b5cf6"/>
-          <KPI icon="💳" title="Pago"       value={fmt(T.pago)} sub={pct(T.pago,T.emp)+" do empenhado"} color="#10b981"/>
-          <KPI icon="⏳" title="A Liquidar" value={fmt(T.aliq)} sub={pct(T.aliq,T.emp)+" do empenhado"} color="#f59e0b"/>
+          <KPI icon="💧" title={<>Liquidado <span style={{fontSize:9,textTransform:"none",fontWeight:600}}>(LOA + RAP)</span></>}  value={fmt(T.liq)}  sub={pct(T.liq,T.emp)+" do empenhado"} color="#8b5cf6"/>
+          <KPI icon="⏳" title={<>A Liquidar <span style={{fontSize:9,textTransform:"none",fontWeight:600}}>(LOA + RAP)</span></>} value={fmt(T.aliq)} sub={pct(T.aliq,T.emp)+" do empenhado"} color="#f59e0b"/>
         </div>
 
         {/* ── Calendário de Vigências ── */}
@@ -372,9 +379,40 @@ export default function App() {
                 fontSize:13,outline:"none",fontFamily:"inherit"
               }}
             />
-            {(search || filtMes || filtAlertaSingle) && (
+            
+            {/* ── Dropdown: Vigência ── */}
+            <div style={{position:"relative", display:"inline-flex", alignItems:"center"}}>
+              <select
+                value={filtVigenciaGrupo}
+                onChange={e => { setFiltVigenciaGrupo(e.target.value as any); setPage(1); }}
+                style={{
+                  appearance: "none",
+                  padding: "10px 36px 10px 14px",
+                  borderRadius: 8,
+                  border: "1px solid #d1d5db",
+                  background: "#f8fafc",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#334155",
+                  outline: "none",
+                  cursor: "pointer",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                  fontFamily: "inherit"
+                }}
+              >
+                <option value="Todos">Status da Vigência: Todos</option>
+                <option value="Válidos">Apenas Contratos Válidos</option>
+                <option value="Vencidos">Apenas Contratos Vencidos</option>
+              </select>
+              {/* Ícone customizado de seta para baixo */}
+              <div style={{position:"absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", fontSize: 10, color: "#64748b"}}>
+                ▼
+              </div>
+            </div>
+
+            {(search || filtMes || filtAlertaSingle || filtVigenciaGrupo !== "Todos") && (
               <button
-                onClick={() => { setSearch(""); setFiltMes(null); setFiltAlertaSingle(null); setPage(1); }}
+                onClick={() => { setSearch(""); setFiltMes(null); setFiltAlertaSingle(null); setFiltVigenciaGrupo("Todos"); setPage(1); }}
                 style={{
                   padding:"10px 16px",borderRadius:8,fontSize:12.5,fontWeight:600,
                   border:"1px solid #cbd5e1",background:"#f8fafc",cursor:"pointer",color:"#475569",
@@ -397,18 +435,18 @@ export default function App() {
           <div style={{width:"100%",overflowX:"hidden"}}>
             <table style={{width:"100%",tableLayout:"fixed",borderCollapse:"collapse",fontSize:11}}>
               <colgroup>
-                <col style={{width:"22%"}}/>
-                <col style={{width:"17%"}}/>
-                <col style={{width:"11%"}}/>
-                <col style={{width:"11%"}}/>
+                <col style={{width:"20%"}}/>
+                <col style={{width:"12%"}}/>
+                <col style={{width:"12%"}}/>
+                <col style={{width:"12%"}}/>
                 <col style={{width:"11%"}}/>
                 <col style={{width:"10%"}}/>
-                <col style={{width:"13%"}}/>
+                <col style={{width:"18%"}}/>
                 <col style={{width:"5%"}}/>
               </colgroup>
               <thead>
                 <tr style={{background:"#f8fafc"}}>
-                  {["Favorecido / CNPJ","Empenhado","Liquidado","Pago","A Liquidar","Vigência","Ação"].map(h => (
+                  {["Favorecido / CNPJ","Empenhado","Liquidado","A Liquidar","Gasto Médio","Vigência","Cobertura","Ação"].map(h => (
                     <th key={h} style={{padding:"6px 8px",textAlign:(h==="Ação"||h==="Vigência")?"center":"left",fontSize:9.5,fontWeight:700,color:"#475569",
                       textTransform:"uppercase",letterSpacing:"0.04em",whiteSpace:"nowrap",borderBottom:"1px solid #e2e8f0"}}>
                       {h}
@@ -419,6 +457,58 @@ export default function App() {
               <tbody>
                 {paginated.map((r: any, i: number) => {
                   const ac = r.alerta_vigencia ? ALERTA_COR[r.alerta_vigencia] : null;
+                  
+                  // Lógica da Cobertura Estimada
+                  let pills = [];
+                  if (r.vigencia_fim) {
+                    try {
+                      const [y, m, d] = r.vigencia_fim.split("-").map(Number);
+                      const fimDate = new Date(y, m - 1, d);
+                      const mesesNomes = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+                      const hojeDate = new Date();
+                      
+                      const mesesPassados = hojeDate.getMonth() + 1;
+                      let gastoMensal = (Number(r.liq) || 0) / mesesPassados;
+                      if (gastoMensal <= 0) gastoMensal = (Number(r.emp) || 0) / 12; // fallback genérico
+                      
+                      const aliq = Number(r.a_liquidar) || 0;
+                      const mesesCobertos = gastoMensal > 0 ? Math.floor(aliq / gastoMensal) : 0;
+                      
+                      let current = new Date(hojeDate.getFullYear(), hojeDate.getMonth(), 1);
+                      const end = new Date(fimDate.getFullYear(), fimDate.getMonth(), 1);
+                      
+                      
+                      let dist = 0;
+                      // Limite da bolinha: ano corrente e máximo de vigência
+                      while (current <= end && current.getFullYear() === hojeDate.getFullYear()) {
+                        const isCovered = dist < mesesCobertos;
+                        pills.push(
+                          <div key={dist} title={isCovered ? "Coberto pelo Saldo" : "Descoberto / Saldo Insuficiente"} style={{
+                            display:"inline-flex", alignItems:"center", justifyContent:"center",
+                            padding: "2px 6px", borderRadius: 12, fontSize: 8, fontWeight: 700,
+                            background: isCovered ? "#dcfce7" : "#fee2e2",
+                            color: isCovered ? "#166534" : "#991b1b",
+                            border: `1px solid ${isCovered ? "#86efac" : "#fca5a5"}`,
+                          }}>
+                            {mesesNomes[current.getMonth()]}
+                          </div>
+                        );
+                        current.setMonth(current.getMonth() + 1);
+                        dist++;
+                      }
+                    } catch(e) {}
+                  }
+
+                  // Variável de formatação para Gasto Mensal e Tooltip explicativo
+                  const hojeM = new Date().getMonth() + 1;
+                  let vGastoMensal = (Number(r.liq) || 0) / hojeM;
+                  let formulaDesc = `Cálculo: Liquidado até o momento (${fmt(r.liq)}) ÷ ${hojeM} meses decorridos do ano.`;
+                  
+                  if (vGastoMensal <= 0) {
+                    vGastoMensal = (Number(r.emp) || 0) / 12;
+                    formulaDesc = `Cálculo (Estimativa Anual): Empenhado Total (${fmt(r.emp)}) ÷ 12 meses. (Sem liquidação no ano)`;
+                  }
+
                   return (
                     <tr key={i} style={{borderBottom:"1px solid #f1f5f9",transition:"background .15s"}}
                       onMouseEnter={e=>(e.currentTarget.style.background="#f8fafc")}
@@ -438,11 +528,15 @@ export default function App() {
                         <div style={{color:"#7c3aed",fontWeight:600}}>{fmt(r.liq)}</div>
                         <Bar pct={(r.liq/r.emp)*100} color="#8b5cf6"/>
                       </td>
-                      <td style={{padding:"6px 8px",fontSize:10.5}}>
-                        <div style={{color:"#059669",fontWeight:600}}>{fmt(r.pago)}</div>
-                        <Bar pct={(r.pago/r.emp)*100} color="#10b981"/>
-                      </td>
                       <td style={{padding:"6px 8px",color:"#d97706",fontWeight:600,fontSize:10.5}}>{fmt(r.a_liquidar)}</td>
+                      
+                      {/* Gasto Médio */}
+                      <td style={{padding:"6px 8px"}}>
+                        <div title={formulaDesc} style={{cursor:"help", display:"inline-block"}}>
+                          <div style={{color:"#475569",fontWeight:600,fontSize:10.5, borderBottom:"1px dashed #cbd5e1"}}>{fmt(vGastoMensal)}</div>
+                          <div style={{fontSize:8.5,color:"#94a3b8"}}>/mês (est.)</div>
+                        </div>
+                      </td>
 
                       {/* Vigência Centralizada */}
                       <td style={{padding:"6px 8px",textAlign:"center"}}>
@@ -462,6 +556,13 @@ export default function App() {
                             )}
                           </div>
                         ) : <span style={{color:"#94a3b8",fontSize:10.5}}>—</span>}
+                      </td>
+
+                      {/* Cobertura */}
+                      <td style={{padding:"6px 8px"}}>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:4,minWidth:120}}>
+                          {pills.length > 0 ? pills : <span style={{color:"#94a3b8",fontSize:10.5}}>—</span>}
+                        </div>
                       </td>
 
                       {/* Botão Ícone Luneta / Detalhamento */}
