@@ -90,6 +90,32 @@ df = df.dropna(subset=["cnpj_cpf"])
 df["cnpj_cpf"] = df["cnpj_cpf"].astype(str)
 df = df[~df["cnpj_cpf"].str.lower().str.contains("total", na=False)]
 
+# --- INÍCIO DO FILTRO CUSTOMIZADO (VGM e Despesas Específicas) ---
+def is_valid_row(r):
+    pi = str(r.get("pi", "")).strip().upper()
+    pi_nome = str(r.get("pi_nome", "")).strip().upper()
+    
+    # 1. Manter PIs que começam com VGM (exceto os excluídos)
+    if pi.startswith("VGM") and pi not in ["VGM01N01I1N", "VGM01N01K9N", "VGM01N01M9N"]:
+        return True
+        
+    # 2. Adicionar rubricas específicas do TG
+    termos_permitidos = [
+        "PASEP - UNB", 
+        "ESTAGIARIOS - AUXILIO TRANSPORTE", 
+        "PASEP - HUB", 
+        "ESTAGIARIOS", 
+        "PGFN 1"
+    ]
+    for termo in termos_permitidos:
+        if termo in pi_nome:
+            return True
+            
+    return False
+
+df = df[df.apply(is_valid_row, axis=1)]
+# --- FIM DO FILTRO CUSTOMIZADO ---
+
 # Extrair chaves de cruzamento
 df["cnpj_norm"]    = df["cnpj_cpf"].apply(norm)
 df["minuta_cod"]   = df["item_info"].apply(ext_minuta)
