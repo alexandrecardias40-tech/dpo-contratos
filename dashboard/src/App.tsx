@@ -258,8 +258,6 @@ export default function App() {
 
   const filtered = useMemo(() => {
     let arr = records.filter((r: any) =>
-      // Mostrar registros com vigencia_fim OU que foram cruzados com o Comprasnet (tem_contrato=true)
-      (Boolean(r.vigencia_fim) || Boolean(r.tem_contrato)) &&
       ((Number(r.emp) || 0) > 0 || (Number(r.liq) || 0) > 0 || (Number(r.pago) || 0) > 0)
     );
     if (search) {
@@ -410,7 +408,7 @@ export default function App() {
               </colgroup>
               <thead>
                 <tr style={{background:"#f8fafc"}}>
-                  {["Favorecido / CNPJ","Processo","Empenhado","Liquidado","Pago","A Liquidar","Vigência","Ação"].map(h => (
+                  {["Favorecido / CNPJ","Empenhado","Liquidado","Pago","A Liquidar","Vigência","Ação"].map(h => (
                     <th key={h} style={{padding:"6px 8px",textAlign:(h==="Ação"||h==="Vigência")?"center":"left",fontSize:9.5,fontWeight:700,color:"#475569",
                       textTransform:"uppercase",letterSpacing:"0.04em",whiteSpace:"nowrap",borderBottom:"1px solid #e2e8f0"}}>
                       {h}
@@ -432,13 +430,6 @@ export default function App() {
                           {r.favorecido_nome || "—"}
                         </div>
                         <div style={{fontSize:9.5,color:"#94a3b8",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.cnpj_cpf_fmt || r.cnpj_cpf}</div>
-                      </td>
-
-                      {/* Processo */}
-                      <td style={{padding:"6px 8px"}}>
-                        <div style={{fontSize:10,color:"#334155",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={r.contrato_processo || "—"}>
-                          {r.contrato_processo || "—"}
-                        </div>
                       </td>
 
                       {/* Valores */}
